@@ -46,13 +46,15 @@ jobs:
 
       - name: Resolve source commit
         shell: bash
+        env:
+          REQUESTED_SOURCE_REF: ${{ inputs.SOURCE_REF }}
         run: |
           sha="$(git -C source rev-parse HEAD)"
           echo "SOURCE_SHA=${sha}" >> "$GITHUB_ENV"
           {
             echo "### Veyril source"
             echo ""
-            echo "\`zenderock/veyril\` ref \`${{ inputs.SOURCE_REF }}\`"
+            echo "\`zenderock/veyril\` ref \`${REQUESTED_SOURCE_REF}\`"
             echo ""
             echo "Commit: \`${sha}\`"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -83,8 +85,19 @@ jobs:
           go-version-file: source/backend/go.mod
           cache-dependency-path: source/backend/go.sum
 
-      - name: Set up Buf
-        uses: bufbuild/buf-setup-action@v1
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: source/.node-version
+
+      - name: Install pinned pnpm dependencies and Rust toolchain
+        working-directory: source
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare "$(node -p 'require("./package.json").packageManager')" --activate
+          pnpm install --frozen-lockfile
+          rustup show
 
       - name: Tool versions
         working-directory: source
@@ -93,7 +106,7 @@ jobs:
           go version
           rustc --version
           cargo --version
-          buf --version
+          pnpm exec buf --version
           python3 --version
 
       - name: Run source-controlled quality gate
