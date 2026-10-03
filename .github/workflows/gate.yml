@@ -18,6 +18,15 @@ on:
         required: false
         default: ""
         type: string
+      SCOPE_MANIFEST:
+        description: Task scope manifest path under .agent-scopes/ in the source commit
+        required: true
+        type: string
+      SCOPE_LABELS:
+        description: Optional comma-separated domain labels copied from the source PR
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -42,6 +51,7 @@ jobs:
           ref: ${{ inputs.SOURCE_REF }}
           token: ${{ secrets.SOURCE_REPO_TOKEN }}
           persist-credentials: false
+          fetch-depth: 0
           path: source
 
       - name: Resolve source commit
@@ -112,6 +122,9 @@ jobs:
       - name: Run source-controlled quality gate
         working-directory: source
         shell: bash
+        env:
+          SCOPE_MANIFEST: ${{ inputs.SCOPE_MANIFEST }}
+          SCOPE_LABELS: ${{ inputs.SCOPE_LABELS }}
         run: bash scripts/ci/public-gate.sh
 
       - name: Report final status to private source
