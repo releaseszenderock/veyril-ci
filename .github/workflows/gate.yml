@@ -27,6 +27,11 @@ on:
         required: false
         default: ""
         type: string
+      CONTEXT_POSTGRES_INTEGRATION:
+        description: Run every per-context Postgres isolation suite defined at the source commit
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -125,6 +130,7 @@ jobs:
         env:
           SCOPE_MANIFEST: ${{ inputs.SCOPE_MANIFEST }}
           SCOPE_LABELS: ${{ inputs.SCOPE_LABELS }}
+          VEYRIL_CONTEXT_POSTGRES_INTEGRATION: ${{ inputs.CONTEXT_POSTGRES_INTEGRATION && '1' || '0' }}
         run: bash scripts/ci/public-gate.sh
 
       - name: Report final status to private source
